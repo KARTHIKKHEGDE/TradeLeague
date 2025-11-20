@@ -1,0 +1,59 @@
+version: "3.9"  # Version of Docker Compose syntax
+
+services:
+
+  # ---------------- PostgreSQL Database ----------------
+  postgres:
+    image: postgres:15         # Official Postgres image
+    container_name: postgres
+    environment:
+      POSTGRES_USER: trading
+      POSTGRES_PASSWORD: trading123
+      POSTGRES_DB: trading_tournament
+    ports:
+      - "5432:5432"           # Exposes port 5432 to your computer
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Persists DB even if container stops
+
+  # ---------------- Redis ----------------
+  redis:
+    image: redis:7             # Official Redis image
+    container_name: redis
+    ports:
+      - "6379:6379"           # Exposes Redis port
+    command: ["redis-server", "--appendonly", "yes"]  # Persist data in Redis
+
+  # ---------------- Backend (FastAPI) ----------------
+  backend:
+    build: ./backend          # Path to backend folder (Dockerfile inside)
+    container_name: backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app        # Mount local folder → container (code changes auto)
+    ports:
+      - "8000:8000"           # Exposes backend API
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://trading:trading123@postgres:5432/trading_tournament
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: supersecretkey
+      BINANCE_API_KEY: your_binance_key
+      BINANCE_API_SECRET: your_binance_secret
+
+  # ---------------- Frontend (Next.js) ----------------
+  frontend:
+    build: ./frontend         # Path to frontend folder (Dockerfile inside)
+    container_name: frontend
+    command: npm run dev      # Starts Next.js dev server
+    volumes:
+      - ./frontend:/app       # Mount local folder → container
+    ports:
+      - "3000:3000"           # Exposes frontend
+    depends_on:
+      - backend
+
+# ---------------- Docker Volumes ----------------
+volumes:
+  pgdata:                     # Named volume for PostgreSQL persistence
