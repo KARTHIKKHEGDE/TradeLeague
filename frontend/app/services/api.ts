@@ -15,6 +15,7 @@ import {
   Trade,
 } from '../types';
 import { TOKEN_KEY, API_BASE_URL } from '../constants';
+import { useUserStore } from '../stores/userStore';
 
 class ApiServiceError extends Error {
   constructor(message: string) {
@@ -28,18 +29,42 @@ class ApiService {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem(TOKEN_KEY);
+      // Try Zustand store first, fallback to localStorage
+      try {
+        const zustandToken = useUserStore.getState().token;
+        if (zustandToken) {
+          this.token = zustandToken;
+        } else {
+          this.token = localStorage.getItem(TOKEN_KEY);
+        }
+      } catch (e) {
+        this.token = localStorage.getItem(TOKEN_KEY);
+      }
     }
   }
 
   setAuthToken(token: string) {
     this.token = token;
-    localStorage.setItem(TOKEN_KEY, token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(TOKEN_KEY, token);
+      try {
+        useUserStore.getState().setToken(token);
+      } catch (e) {
+        console.log('Zustand store not ready, token saved to localStorage');
+      }
+    }
   }
 
   clearAuthToken() {
     this.token = null;
-    localStorage.removeItem(TOKEN_KEY);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      try {
+        useUserStore.getState().logout();
+      } catch (e) {
+        console.log('Zustand store not ready, token cleared from localStorage');
+      }
+    }
   }
 
   private getHeaders(): HeadersInit {
@@ -56,12 +81,15 @@ class ApiService {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: 'Something went wrong. Please try again.',
-      }));
-      throw new ApiServiceError(
-        error.detail || `HTTP ${response.status}: ${response.statusText}`
-      );
+      let errorMessage = 'Something went wrong. Please try again.';
+      try {
+        const error = await response.json();
+        errorMessage = error.detail || error.message || errorMessage;
+      } catch (e) {
+        // If response is not JSON, use status text
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new ApiServiceError(errorMessage);
     }
     return response.json();
   }
@@ -165,6 +193,38 @@ class ApiService {
       { headers: this.getHeaders() }
     );
     return this.handleResponse(response);
+  }
+
+  // ==========================================
+  // GENERIC HTTP METHODS
+  // ==========================================
+
+  async get<T = any>(url: string): Promise<{ data: T }> {
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+    const data = await this.handleResponse<T>(response);
+    return { data };
+  }
+
+  async post<T = any>(url: string, body: any): Promise<{ data: T }> {
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(body),
+    });
+    const data = await this.handleResponse<T>(response);
+    return { data };
+  }
+
+  async delete<T = any>(url: string): Promise<{ data: T }> {
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    const data = await this.handleResponse<T>(response);
+    return { data };
   }
 }
 

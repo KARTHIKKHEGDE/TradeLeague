@@ -28,7 +28,7 @@ def create_admin_user():
         admin = User(
             email="admin@test.com",
             username="admin",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash("Password@123"),
             is_active=True,
             is_admin=True
         )
@@ -39,7 +39,7 @@ def create_admin_user():
         
         print("✅ Admin user created successfully!")
         print(f"   Email: admin@test.com")
-        print(f"   Password: password123")
+        print(f"   Password: Password@123")
         print(f"   User ID: {admin.id}")
         
     except Exception as e:

@@ -18,8 +18,7 @@ function getStatusColor(status: string | undefined) {
 }
 
 export default function TournamentCard({ tournament, onJoin }: TournamentCardProps) {
-  const statusValue = tournament.status
-    ?? (tournament.is_active ? "active" : "upcoming");
+  const statusValue = tournament.is_active ? "active" : "upcoming";
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
@@ -52,16 +51,15 @@ export default function TournamentCard({ tournament, onJoin }: TournamentCardPro
 
       {/* Details */}
       <div className="space-y-2 mb-5 text-sm">
-        <DetailRow label="Start Date" value={formatDate(tournament.start_date)} />
-        <DetailRow label="End Date" value={formatDate(tournament.end_date)} />
-        <DetailRow label="Entry Fee" value={`₹${tournament.entry_fee}`} />
+        <DetailRow label="Start Date" value={formatDate(tournament.start_time)} />
+        <DetailRow label="End Date" value={formatDate(tournament.end_time)} />
+        <DetailRow
+          label="Initial Balance"
+          value={<span className="text-blue-400 font-semibold">₹{tournament.initial_balance}</span>}
+        />
         <DetailRow
           label="Prize Pool"
           value={<span className="text-green-400 font-semibold">₹{tournament.prize_pool}</span>}
-        />
-        <DetailRow
-          label="Participants"
-          value={`${tournament.participant_count} / ${tournament.max_participants}`}
         />
       </div>
 

@@ -30,9 +30,20 @@ export default function Login() {
     
     try {
       const response = await login(email, password);
+      console.log('Login Response:', response);
+      console.log('User is_admin:', response.user.is_admin);
+      
       setUser(response.user);
       setToken(response.access_token);
-      router.push('/dashboard');
+      
+      // Redirect to admin if user is admin, otherwise to dashboard
+      if (response.user.is_admin) {
+        console.log('Redirecting to /admin');
+        router.push('/admin');
+      } else {
+        console.log('Redirecting to /dashboard');
+        router.push('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {

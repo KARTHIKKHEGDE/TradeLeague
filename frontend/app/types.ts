@@ -33,15 +33,11 @@ export interface Tournament {
   id: number;
   name: string;
   description: string;
-  start_date: string;
-  end_date: string;
-  entry_fee: number;
-  prize_pool: number;
-  participant_count: number;
-  max_participants: number;
-  status: 'upcoming' | 'active' | 'completed';
+  start_time: string;
+  end_time: string;
   initial_balance: number;
-  is_active?: boolean;
+  prize_pool: number;
+  is_active: boolean;
 }
 
 // Trade Types
