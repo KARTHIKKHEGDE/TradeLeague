@@ -2,11 +2,11 @@
 // API SERVICE - ALL HTTP REQUESTS
 // ==========================================
 
-import { 
-  AuthResponse, 
-  LoginRequest, 
-  SignupRequest, 
-  User, 
+import {
+  AuthResponse,
+  LoginRequest,
+  SignupRequest,
+  User,
   Tournament,
   TradeRequest,
   TradeResponse,
@@ -15,12 +15,6 @@ import {
   Trade,
 } from '../types';
 import { TOKEN_KEY, API_BASE_URL } from '../constants';
-
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-}
 
 class ApiServiceError extends Error {
   constructor(message: string) {
@@ -40,16 +34,12 @@ class ApiService {
 
   setAuthToken(token: string) {
     this.token = token;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOKEN_KEY, token);
-    }
+    localStorage.setItem(TOKEN_KEY, token);
   }
 
   clearAuthToken() {
     this.token = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(TOKEN_KEY);
-    }
+    localStorage.removeItem(TOKEN_KEY);
   }
 
   private getHeaders(): HeadersInit {
@@ -66,10 +56,12 @@ class ApiService {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ 
-        detail: 'An unknown error occurred' 
+      const error = await response.json().catch(() => ({
+        detail: 'Something went wrong. Please try again.',
       }));
-      throw new ApiServiceError(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+      throw new ApiServiceError(
+        error.detail || `HTTP ${response.status}: ${response.statusText}`
+      );
     }
     return response.json();
   }
@@ -79,16 +71,10 @@ class ApiService {
   // ==========================================
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    const formData = new URLSearchParams();
-    formData.append('email', email);
-    formData.append('password', password);
-
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData,
+      headers: this.getHeaders(),
+      body: JSON.stringify({ email, password }),
     });
 
     const result = await this.handleResponse<AuthResponse>(response);
@@ -96,16 +82,14 @@ class ApiService {
     return result;
   }
 
-  async signup(username: string, email: string, password: string): Promise<AuthResponse> {
+  async signup(username: string, email: string, password: string): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: this.getHeaders(),
       body: JSON.stringify({ username, email, password }),
     });
 
-    const result = await this.handleResponse<AuthResponse>(response);
-    this.setAuthToken(result.access_token);
-    return result;
+    return this.handleResponse<User>(response);
   }
 
   async getMe(): Promise<User> {
@@ -123,17 +107,17 @@ class ApiService {
     const response = await fetch(`${API_BASE_URL}/api/tournaments`, {
       headers: this.getHeaders(),
     });
-    return this.handleResponse<Tournament[]>(response);
+    return this.handleResponse(response);
   }
 
   async getTournament(id: number): Promise<Tournament> {
     const response = await fetch(`${API_BASE_URL}/api/tournaments/${id}`, {
       headers: this.getHeaders(),
     });
-    return this.handleResponse<Tournament>(response);
+    return this.handleResponse(response);
   }
 
-  async joinTournament(id: number): Promise<{ message: string; tournament_id: number; initial_balance: number }> {
+  async joinTournament(id: number): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/api/tournaments/${id}/join`, {
       method: 'POST',
       headers: this.getHeaders(),
@@ -141,12 +125,15 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async getLeaderboard(tournamentId: number, limit: number = 50): Promise<LeaderboardEntry[]> {
+  async getLeaderboard(
+    tournamentId: number,
+    limit: number = 50
+  ): Promise<LeaderboardEntry[]> {
     const response = await fetch(
       `${API_BASE_URL}/api/tournaments/${tournamentId}/leaderboard?limit=${limit}`,
       { headers: this.getHeaders() }
     );
-    return this.handleResponse<LeaderboardEntry[]>(response);
+    return this.handleResponse(response);
   }
 
   // ==========================================
@@ -159,10 +146,12 @@ class ApiService {
       headers: this.getHeaders(),
       body: JSON.stringify(data),
     });
-    return this.handleResponse<TradeResponse>(response);
+    return this.handleResponse(response);
   }
 
-  async getTradeHistory(tournamentId: number): Promise<{ trades: Trade[] }> {
+  async getTradeHistory(
+    tournamentId: number
+  ): Promise<{ trades: Trade[] }> {
     const response = await fetch(
       `${API_BASE_URL}/api/trades/history?tournament_id=${tournamentId}`,
       { headers: this.getHeaders() }
@@ -175,15 +164,18 @@ class ApiService {
       `${API_BASE_URL}/api/trades/pnl?tournament_id=${tournamentId}`,
       { headers: this.getHeaders() }
     );
-    return this.handleResponse<PNLData>(response);
+    return this.handleResponse(response);
   }
 }
 
+// Export single instance
 export const api = new ApiService();
 
-// Export convenience functions for backward compatibility
-export const login = (email: string, password: string) => api.login(email, password);
-export const signup = (name: string, email: string, password: string) => api.signup(name, email, password);
+// Old compatibility exports
+export const login = (email: string, password: string) =>
+  api.login(email, password);
+export const signup = (username: string, email: string, password: string) =>
+  api.signup(username, email, password);
 export const getTournaments = () => api.getTournaments();
 export const getTournament = (id: number) => api.getTournament(id);
 export const joinTournament = (id: number) => api.joinTournament(id);

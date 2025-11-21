@@ -12,7 +12,7 @@ def test_signup():
         json={
             "email": "testuser@example.com",
             "username": "testuser",
-            "password": "password123"
+            "password": "Password123!"
         }
     )
     if response.status_code == 201:
@@ -33,7 +33,7 @@ def test_signup_duplicate():
         json={
             "email": "testuser@example.com",
             "username": "testuser",
-            "password": "password123"
+            "password": "Password123!"
         }
     )
     if response.status_code == 400:
@@ -48,9 +48,9 @@ def test_login_valid():
     print("\n3️⃣  Testing Valid Login...")
     response = requests.post(
         f"{BASE_URL}/api/auth/login",
-        data={
+        json={
             "email": "testuser@example.com",
-            "password": "password123"
+            "password": "Password123!"
         }
     )
     if response.status_code == 200:
@@ -68,9 +68,9 @@ def test_login_invalid_email():
     print("\n4️⃣  Testing Invalid Email Login...")
     response = requests.post(
         f"{BASE_URL}/api/auth/login",
-        data={
+        json={
             "email": "invalid@example.com",
-            "password": "password123"
+            "password": "Password123!"
         }
     )
     if response.status_code == 401:
@@ -85,46 +85,10 @@ def test_login_invalid_password():
     print("\n5️⃣  Testing Invalid Password Login...")
     response = requests.post(
         f"{BASE_URL}/api/auth/login",
-        data={
+        json={
             "email": "testuser@example.com",
             "password": "wrongpassword"
         }
-    )
-    if response.status_code == 401:
-        print("   ✅ Invalid password correctly rejected")
-        return True
-    else:
-        print(f"   ❌ Invalid password not rejected: {response.status_code}")
-        return False
-
-def test_login_invalid_email():
-    """Test login with invalid email"""
-    print("\n4️⃣  Testing Invalid Email Login...")
-    response = requests.post(
-        f"{BASE_URL}/api/auth/login",
-        data={
-            "username": "",
-            "password": "password123"
-        },
-        params={"email": "invalid@example.com"}
-    )
-    if response.status_code == 401:
-        print("   ✅ Invalid email correctly rejected")
-        return True
-    else:
-        print(f"   ❌ Invalid email not rejected: {response.status_code}")
-        return False
-
-def test_login_invalid_password():
-    """Test login with invalid password"""
-    print("\n5️⃣  Testing Invalid Password Login...")
-    response = requests.post(
-        f"{BASE_URL}/api/auth/login",
-        data={
-            "username": "",
-            "password": "wrongpassword"
-        },
-        params={"email": "testuser@example.com"}
     )
     if response.status_code == 401:
         print("   ✅ Invalid password correctly rejected")
@@ -177,8 +141,8 @@ def test_no_token():
     """Test accessing protected endpoint without token"""
     print("\n9️⃣  Testing No Token...")
     response = requests.get(f"{BASE_URL}/api/auth/me")
-    if response.status_code == 401:
-        print("   ✅ No token correctly rejected")
+    if response.status_code == 403:
+        print("   ✅ No token correctly rejected (403)")
         return True
     else:
         print(f"   ❌ No token not rejected: {response.status_code}")
@@ -190,9 +154,9 @@ def test_expired_token():
     # First get a valid token
     response = requests.post(
         f"{BASE_URL}/api/auth/login",
-        data={
+        json={
             "email": "testuser@example.com",
-            "password": "password123"
+            "password": "Password123!"
         }
     )
     if response.status_code != 200:

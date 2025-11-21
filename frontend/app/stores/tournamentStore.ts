@@ -15,7 +15,7 @@ interface TournamentState {
   // Actions
   fetchTournaments: () => Promise<void>;
   fetchTournamentDetails: (id: number) => Promise<void>;
-  joinTournament: (id: number) => Promise<{ message: string; tournament_id: number; initial_balance: number }>;  // CHANGED: Return type
+  joinTournament: (id: number) => Promise<{ message: string }>;
   setActiveTournament: (tournament: Tournament | null) => void;
   clearError: () => void;
 }
@@ -52,14 +52,14 @@ export const useTournamentStore = create<TournamentState>((set, get) => ({
     }
   },
 
-  joinTournament: async (id: number) => {
+  joinTournament: async (id: number): Promise<{ message: string }> => {
     set({ isLoading: true, error: null });
     try {
       const response = await api.joinTournament(id);
       
       // Update tournament in list to reflect joined status
-      const tournaments = get().tournaments.map((t: Tournament) =>  // CHANGED: Added type
-        t.id === id ? { ...t, is_active: true } : t
+      const tournaments = get().tournaments.map((t: Tournament) =>
+        t.id === id ? { ...t, status: 'active' as const } : t
       );
       
       set({ tournaments, isLoading: false });
