@@ -57,6 +57,12 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">TradeLeague</h1>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/dashboard/btcusd')}
+              className="bg-yellow-500 text-black px-3 py-2 rounded hover:bg-yellow-600 transition"
+            >
+              BTC
+            </button>
             <span className="text-gray-300">Welcome, {user?.username}</span>
             <button
               onClick={handleLogout}
