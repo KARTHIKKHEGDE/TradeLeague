@@ -1,5 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from .api import auth, tournaments, trades, admin
 from .websocket.manager import manager
 from .websocket import handlers
@@ -7,6 +9,8 @@ from .api.dependencies import get_current_user
 from .models.user import User
 import json
 from .utils.logger import logger  
+from .api import demo_trading
+
 
 app = FastAPI(
     title="Trading Tournament API",
@@ -25,12 +29,30 @@ app.add_middleware(
 )
 
 # -------------------------
+# Exception handler for validation errors
+# -------------------------
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """Log validation errors for debugging"""
+    logger.error(f"❌ Validation Error on {request.method} {request.url.path}")
+    logger.error(f"   Errors: {exc.errors()}")
+    logger.error(f"   Body: {await request.body()}")
+    return JSONResponse(
+        status_code=400,
+        content={
+            "detail": "Invalid request format",
+            "errors": exc.errors()
+        },
+    )
+
+# -------------------------
 # Include API routers
 # -------------------------
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(tournaments.router, prefix="/api/tournaments", tags=["tournaments"])
 app.include_router(trades.router, prefix="/api/trades", tags=["trades"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(demo_trading.router, prefix="/api/demo-trading", tags=["demo-trading"])
 
 # -------------------------
 # Root endpoint

@@ -33,15 +33,26 @@ class BinanceService:
         else:
             self.ws_url = "wss://stream.binance.com:9443/ws"
     
-    def get_current_price(self, symbol: str) -> float:
-        """Get current price via REST API"""
-        ticker = self.client.get_symbol_ticker(symbol=symbol)
-        price = float(ticker['price'])
+    def get_current_price(self, symbol: str) -> Optional[float]:
+        """Get current price via REST API with fallback to cache"""
+        try:
+            ticker = self.client.get_symbol_ticker(symbol=symbol)
+            price = float(ticker['price'])
+            
+            with self._price_lock:
+                self.latest_prices[symbol] = price
+            
+            logger.info(f"✅ Fetched {symbol} price: ${price}")
+            return price
         
-        with self._price_lock:
-            self.latest_prices[symbol] = price
-        
-        return price
+        except Exception as e:
+            logger.warning(f"Failed to fetch price for {symbol}: {e}. Using cached price.")
+            # Return cached price if available
+            with self._price_lock:
+                if symbol in self.latest_prices:
+                    return self.latest_prices[symbol]
+            logger.error(f"❌ No cached price available for {symbol}")
+            return None
     
     def get_klines(self, symbol: str, interval: str, limit: int = 100):
         """Get candlestick data via REST API"""

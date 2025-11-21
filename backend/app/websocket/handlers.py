@@ -67,10 +67,15 @@ async def handle_websocket_message(websocket: WebSocket, user_id: int, message: 
                 Receives EVERY trade execution in real-time.
                 """
                 if _main_loop and not _main_loop.is_closed():
+                    # Broadcast price to all users
                     asyncio.run_coroutine_threadsafe(
                         manager.broadcast_price_update(symbol, price_data),
-                        _main_loop
-                    )
+                        _main_loop)
+                    
+                    # Check and close orders on this price tick
+                    asyncio.run_coroutine_threadsafe(
+                        handle_price_tick_for_trading(symbol, price_data),
+                        _main_loop)
                 else:
                     logger.warning(f"Cannot broadcast - main loop unavailable for {symbol}")
             
@@ -167,3 +172,61 @@ async def handle_websocket_message(websocket: WebSocket, user_id: int, message: 
             "type": "error",
             "message": f"Unknown message type: {message_type}"
         }, user_id)
+
+# =========================================
+# Handle price ticks and check orders
+# =========================================
+async def handle_price_tick_for_trading(symbol: str, price_data: dict):
+    """
+    Called on every price tick.
+    Checks if any open demo orders should be closed (SL/TP hit).
+    """
+    from sqlalchemy.orm import Session
+    from ..db import SessionLocal
+    from .manager import manager
+    from ..services.demo_trading_engine import DemoTradingEngine
+    
+    db = SessionLocal()
+    try:
+        # Extract current price
+        current_price = price_data.get("price") or price_data.get("last_price")
+        
+        if not current_price:
+            logger.warning(f"No price found in price_data: {price_data}")
+            return
+        
+        logger.info(f"📊 Checking orders for {symbol} @ ${current_price}")
+        
+        # Check and close orders
+        closed_orders = DemoTradingEngine.check_and_close_orders(db, symbol, current_price)
+        
+        # Broadcast closed orders to all users
+        for order in closed_orders:
+            await manager.send_personal_message({
+                "type": "order_closed",
+                "data": {
+                    "id": order.id,
+                    "symbol": order.symbol,
+                    "side": order.side,
+                    "size": order.size,
+                    "entry_price": order.entry_price,
+                    "close_price": order.close_price,
+                    "pnl": order.pnl,
+                    "status": order.status,
+                }
+            }, order.user_id)
+            
+            # Also send wallet update
+            wallet = DemoTradingEngine.get_or_create_wallet(db, order.user_id)
+            await manager.send_personal_message({
+                "type": "wallet_updated",
+                "data": {
+                    "balance": wallet.balance,
+                    "currency": wallet.currency,
+                }
+            }, order.user_id)
+    
+    except Exception as e:
+        logger.error(f"Error handling price tick for trading: {e}", exc_info=True)
+    finally:
+        db.close()
