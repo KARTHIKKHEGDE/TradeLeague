@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useUserStore } from '../../stores/userStore';
 import { WEBSOCKET_URL } from '../../constants';
 
-export default function LivePrice() {
+type LivePriceProps = {
+  symbol?: string;
+};
+
+export default function LivePrice({ symbol = 'BTCUSDT' }: LivePriceProps) {
   const [price, setPrice] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -42,7 +46,7 @@ export default function LivePrice() {
       };
     }
 
-    // Connect to backend WebSocket and subscribe to BTC ticks
+    // Connect to backend WebSocket and subscribe to the selected symbol ticks
     const wsUrl = `${WEBSOCKET_URL}?token=${token}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
@@ -51,7 +55,7 @@ export default function LivePrice() {
       setLoading(false);
       setError('');
       // subscribe to BTCUSDT price updates
-      const msg = { type: 'subscribe_symbol', symbol: 'BTCUSDT' };
+      const msg = { type: 'subscribe_symbol', symbol };
       ws.send(JSON.stringify(msg));
     };
 
@@ -64,7 +68,7 @@ export default function LivePrice() {
           // price data expected under data field
           const payload = data.data;
           // Attempt common fields
-          const p = payload?.price || payload?.last_price || payload?.price_usd || payload?.price_usd;
+          const p = payload?.price || payload?.last_price || payload?.price_usd || payload?.last || payload?.tick_price;
           const numeric = typeof p === 'number' ? p : parseFloat(p);
           if (!Number.isNaN(numeric)) {
             setPrice(numeric);
@@ -97,11 +101,15 @@ export default function LivePrice() {
     return () => {
       if (wsRef.current) {
         try {
+          // unsubscribe before closing if possible
+          try {
+            wsRef.current.send(JSON.stringify({ type: 'unsubscribe_symbol', symbol }));
+          } catch (_) {}
           wsRef.current.close();
         } catch (_) {}
       }
     };
-  }, [token]);
+  }, [token, symbol]);
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 max-w-md mx-auto">
