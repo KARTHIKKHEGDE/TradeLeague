@@ -14,8 +14,9 @@ hiredis==2.2.3
 
 # Authentication
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+passlib[argon2]==1.7.4
 python-dotenv==1.0.0
+email-validator==2.1.0
 
 # Binance Integration
 python-binance==1.0.19

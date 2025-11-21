@@ -14,7 +14,9 @@ from app.models.position import Position
 from app.models.wallet import Wallet
 from dotenv import load_dotenv
 
-load_dotenv('.env.local')
+backend_dir = os.path.dirname(os.path.dirname(__file__))
+env_path = os.path.join(backend_dir, '.env.local')
+load_dotenv(env_path)
 
 config = context.config
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))

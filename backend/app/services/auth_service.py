@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from jose import jwt
 from ..config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Use Argon2 ONLY for password hashing (modern, secure, no bcrypt issues)
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)

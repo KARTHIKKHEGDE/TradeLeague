@@ -48,7 +48,7 @@ services:
     container_name: frontend
     command: npm run dev      # Starts Next.js dev server
     volumes:
-      - ./frontend:/app       # Mount local folder → container
+      - ./frontend/app:/app       # Mount local folder → container (code changes auto)
     ports:
       - "3000:3000"           # Exposes frontend
     depends_on:
