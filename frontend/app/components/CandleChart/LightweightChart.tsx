@@ -68,9 +68,10 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height: 500,
-      layout: { background: { color: '#1a1a1a' }, textColor: '#d1d5db' },
-      grid: { vertLines: { color: '#2B2B43' }, horzLines: { color: '#2B2B43' } },
+      layout: { background: { color: '#111827' }, textColor: '#9ca3af' },
+      grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
       timeScale: { timeVisible: true, secondsVisible: false },
+      rightPriceScale: { autoScale: true, scaleMargins: { top: 0.15, bottom: 0.15 } },
     });
 
     const candleSeries = chart.addCandlestickSeries({
@@ -125,7 +126,7 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
   useEffect(() => {
     if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
 
-    const liveCandles = aggregateTicksToCandles(ticks, timeframe);
+    const liveCandles = aggregateTicksToCandles(ticks as Tick[], timeframe);
     const allCandles = mergeCandles(historicalCandles, liveCandles);
 
     candleSeriesRef.current.setData(allCandles);
@@ -150,8 +151,23 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
 
 function mergeCandles(historical: Candle[], live: Candle[]): Candle[] {
   const candlesMap = new Map<number, Candle>();
-  historical.forEach(c => candlesMap.set(c.time as number, c));
-  live.forEach(c => candlesMap.set(c.time as number, c));
+  
+  // Add historical candles with validation
+  historical.forEach(c => {
+    const timeValue = c.time as number;
+    if (!isNaN(timeValue) && timeValue > 0) {
+      candlesMap.set(timeValue, c);
+    }
+  });
+  
+  // Add live candles with validation (overwrite historical if same time)
+  live.forEach(c => {
+    const timeValue = c.time as number;
+    if (!isNaN(timeValue) && timeValue > 0) {
+      candlesMap.set(timeValue, c);
+    }
+  });
+  
   return Array.from(candlesMap.values()).sort((a, b) => (a.time as number) - (b.time as number));
 }
 
@@ -162,7 +178,19 @@ function aggregateTicksToCandles(ticks: Tick[], timeframe: string): Candle[] {
   const candlesMap = new Map<number, Candle>();
 
   ticks.forEach((tick) => {
+    // Validate tick data
+    if (!tick || typeof tick.time !== 'number' || tick.time <= 0) {
+      console.warn('Invalid tick data:', tick);
+      return;
+    }
+
     const bucketStart = Math.floor(tick.time / timeframeSeconds) * timeframeSeconds;
+    
+    if (isNaN(bucketStart)) {
+      console.warn('Invalid bucket start for tick:', tick);
+      return;
+    }
+
     let candle = candlesMap.get(bucketStart);
 
     if (!candle) {

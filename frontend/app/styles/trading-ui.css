@@ -1,0 +1,235 @@
+/* Trading UI - Professional Layout Styles */
+
+/* ============================================
+   LAYOUT STRUCTURE
+   ============================================ */
+
+.trading-container {
+  @apply min-h-screen bg-gray-900 text-white flex flex-col;
+}
+
+.trading-top-bar {
+  @apply h-12 bg-gray-800 border-b border-gray-700 flex items-center px-3 gap-2 overflow-x-auto;
+}
+
+.trading-main {
+  @apply flex flex-1 overflow-hidden;
+}
+
+.trading-left-toolbar {
+  @apply flex flex-col gap-1 bg-gray-900 border-r border-gray-700 p-2 w-14;
+}
+
+.trading-center {
+  @apply flex-1 flex flex-col overflow-hidden;
+}
+
+.trading-timeframe-bar {
+  @apply h-10 bg-gray-800 border-b border-gray-700 flex items-center px-3 gap-1 overflow-x-auto;
+}
+
+.trading-chart-container {
+  @apply flex-1 overflow-hidden;
+}
+
+.trading-right-panel {
+  @apply bg-gray-800 border-l border-gray-700 flex flex-col h-full w-64;
+}
+
+.trading-bottom {
+  @apply border-t border-gray-700 max-h-48 overflow-y-auto;
+}
+
+/* ============================================
+   BUTTONS & CONTROLS
+   ============================================ */
+
+.btn-toolbar {
+  @apply flex items-center justify-center w-full h-10 rounded text-xs font-medium transition-all;
+}
+
+.btn-toolbar-active {
+  @apply bg-blue-600 text-white;
+}
+
+.btn-toolbar-inactive {
+  @apply bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white;
+}
+
+.btn-tab {
+  @apply px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all;
+}
+
+.btn-tab-active {
+  @apply bg-blue-600 text-white;
+}
+
+.btn-tab-inactive {
+  @apply bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white;
+}
+
+.btn-timeframe {
+  @apply px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition-all;
+}
+
+.btn-timeframe-active {
+  @apply bg-blue-600 text-white;
+}
+
+.btn-timeframe-inactive {
+  @apply bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white;
+}
+
+/* ============================================
+   ORDER PANEL
+   ============================================ */
+
+.order-panel-header {
+  @apply px-3 py-2 border-b border-gray-700;
+}
+
+.order-panel-content {
+  @apply flex-1 overflow-y-auto px-3 py-3 space-y-3;
+}
+
+.order-panel-footer {
+  @apply px-3 py-2 border-t border-gray-700;
+}
+
+.order-price-display {
+  @apply bg-gray-900 p-2.5 rounded-md border border-gray-700;
+}
+
+.order-buy-btn {
+  @apply flex-1 py-1.5 rounded text-xs font-bold transition-all;
+}
+
+.order-buy-active {
+  @apply bg-green-600 text-white;
+}
+
+.order-buy-inactive {
+  @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+}
+
+.order-sell-btn {
+  @apply flex-1 py-1.5 rounded text-xs font-bold transition-all;
+}
+
+.order-sell-active {
+  @apply bg-red-600 text-white;
+}
+
+.order-sell-inactive {
+  @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+}
+
+.input-order {
+  @apply w-full px-2.5 py-1.5 bg-gray-900 text-white text-sm rounded border border-gray-600 focus:border-blue-500 outline-none transition;
+}
+
+.btn-place-order {
+  @apply w-full py-2 rounded font-bold text-sm transition-all text-white;
+}
+
+.btn-place-order-buy {
+  @apply bg-green-600 hover:bg-green-700 disabled:bg-green-900;
+}
+
+.btn-place-order-sell {
+  @apply bg-red-600 hover:bg-red-700 disabled:bg-red-900;
+}
+
+/* ============================================
+   SPACING & SIZING
+   ============================================ */
+
+.compact-spacing {
+  @apply gap-2;
+}
+
+.minimal-padding {
+  @apply p-2;
+}
+
+.minimal-rounded {
+  @apply rounded-md;
+}
+
+/* ============================================
+   COLORS
+   ============================================ */
+
+.color-bg-primary {
+  @apply bg-gray-900;
+}
+
+.color-bg-secondary {
+  @apply bg-gray-800;
+}
+
+.color-bg-tertiary {
+  @apply bg-gray-700;
+}
+
+.color-text-primary {
+  @apply text-white;
+}
+
+.color-text-secondary {
+  @apply text-gray-300;
+}
+
+.color-text-muted {
+  @apply text-gray-400;
+}
+
+.color-border {
+  @apply border-gray-700;
+}
+
+.color-accent-blue {
+  @apply text-blue-400;
+}
+
+.color-accent-green {
+  @apply text-green-400;
+}
+
+.color-accent-red {
+  @apply text-red-400;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1280px) {
+  .trading-right-panel {
+    @apply w-56;
+  }
+}
+
+@media (max-width: 1024px) {
+  .trading-right-panel {
+    @apply w-48;
+  }
+}
+
+@media (max-width: 768px) {
+  .trading-main {
+    @apply flex-col;
+  }
+
+  .trading-left-toolbar {
+    @apply w-full h-12 flex-row px-3;
+  }
+
+  .trading-right-panel {
+    @apply w-full h-32 flex-row;
+  }
+
+  .trading-bottom {
+    @apply max-h-none;
+  }
+}

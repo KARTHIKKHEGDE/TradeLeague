@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
+import { useUserStore } from '../../stores/userStore';
 import TournamentCard from '../../components/TournamentCard';
+import TradingNavbar from '../../components/TradingNavbar/TradingNavbar';
 import { getTournaments, joinTournament } from '../../services/api';
 import { Tournament } from '../../types';
 
@@ -41,11 +43,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push('/auth/login');
-  };
-
   if (!isAuthenticated) {
     return null;
   }
@@ -53,26 +50,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Navbar */}
-      <nav className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">TradeLeague</h1>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/dashboard/livemarket')}
-              className="bg-yellow-500 text-black px-3 py-2 rounded hover:bg-yellow-600 transition"
-            >
-              Live market
-            </button>
-            <span className="text-gray-300">Welcome, {user?.username}</span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
+      <TradingNavbar 
+        showLiveMarketButton={true}
+        onLiveMarketClick={() => router.push('/dashboard/livemarket')}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
