@@ -19,28 +19,29 @@ interface Wallet {
 export default function LiveMarketPage() {
   const router = useRouter();
   const [symbol, setSymbol] = useState('BTCUSDT');
+  const [timeframe, setTimeframe] = useState('1m');
   const token = useUserStore.getState().token;
   const { currentPrice, ticks, orderRefreshTrigger, addTick, triggerOrderRefresh } =
     useTradingStore();
 
-  // NEW: Wallet state
+  // Wallet state
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [priceLoaded, setPriceLoaded] = useState(false);
 
-  // NEW: Fetch wallet on mount and when orderRefreshTrigger changes
+  // Fetch wallet on mount and when orderRefreshTrigger changes
   useEffect(() => {
     fetchWallet();
     fetchOrders();
   }, [orderRefreshTrigger]);
 
-  // NEW: Fetch initial price on mount
+  // Fetch initial price on mount
   useEffect(() => {
     fetchInitialPrice();
   }, []);
 
-  // NEW: Fetch wallet function
+  // Fetch wallet function
   const fetchWallet = async () => {
     try {
       setLoadingWallet(true);
@@ -53,7 +54,7 @@ export default function LiveMarketPage() {
     }
   };
 
-  // NEW: Fetch orders function
+  // Fetch orders function
   const fetchOrders = async () => {
     try {
       const response = await api.get('/api/demo-trading/orders');
@@ -63,7 +64,7 @@ export default function LiveMarketPage() {
     }
   };
 
-  // NEW: Fetch initial price from backend
+  // Fetch initial price from backend
   const fetchInitialPrice = async () => {
     try {
       const response = await api.get(`/api/demo-trading/price?symbol=${symbol}`);
@@ -143,7 +144,7 @@ export default function LiveMarketPage() {
     return orders
       .filter(o => o.status === 'OPEN')
       .reduce((sum, o) => {
-        const pnl = o.side === 'BUY' 
+        const pnl = o.side === 'BUY'
           ? (currentPrice - o.entry_price) * o.size
           : (o.entry_price - currentPrice) * o.size;
         return sum + pnl;
@@ -204,8 +205,23 @@ export default function LiveMarketPage() {
         {/* Main grid: Chart + Order Panel + Wallet Panel */}
         <div className="grid grid-cols-3 gap-6 mb-6">
           {/* Chart - spans 2 columns */}
-          <div className="col-span-2">
-            <LightweightChart symbol={symbol} ticks={ticks} />
+          <div className="col-span-2 flex flex-col gap-4">
+            {/* Timeframe Selector */}
+            <div className="flex gap-2 bg-gray-800 p-2 rounded-lg w-fit">
+              {['1m', '3m', '5m', '15m', '30m', '1h'].map((tf) => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-3 py-1 rounded text-sm font-medium transition ${timeframe === tf
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                    }`}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
+            <LightweightChart symbol={symbol} ticks={ticks} timeframe={timeframe} />
           </div>
 
           {/* Right sidebar: Order Panel + Wallet Panel */}

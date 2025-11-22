@@ -1,12 +1,17 @@
 import { create } from 'zustand';
 
+export interface Tick {
+  price: number;
+  time: number; // Unix timestamp in seconds
+}
+
 interface TradingState {
   currentPrice: number | null;
-  ticks: number[];
+  ticks: Tick[];
   orders: any[];
   wallet: any;
   orderRefreshTrigger: number;
-  
+
   setCurrentPrice: (price: number) => void;
   addTick: (price: number) => void;
   setOrders: (orders: any[]) => void;
@@ -25,7 +30,7 @@ export const useTradingStore = create<TradingState>((set) => ({
 
   addTick: (price: number) =>
     set((state) => ({
-      ticks: [...state.ticks.slice(-99), price], // Keep last 100 ticks
+      ticks: [...state.ticks, { price, time: Math.floor(Date.now() / 1000) }],
       currentPrice: price,
     })),
 
