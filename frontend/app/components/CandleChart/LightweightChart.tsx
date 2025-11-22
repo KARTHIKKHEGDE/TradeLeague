@@ -18,7 +18,16 @@ interface LightweightChartProps {
   timeframe: string;
 }
 
-export default function LightweightChart({ symbol, ticks, timeframe }: LightweightChartProps) {
+export default function LightweightChart({ symbol, ticks, timeframe, addMA }: LightweightChartProps & { addMA?: boolean }) {
+  // MA indicator active state
+  const [maActive, setMaActive] = useState(!!addMA);
+  // Sync maActive with addMA prop
+  useEffect(() => {
+    setMaActive(!!addMA);
+  }, [addMA]);
+  // MA indicator state
+  const [maPeriod, setMaPeriod] = useState(14); // Default Exness period
+  const maSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -93,6 +102,22 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
       scaleMargins: { top: 0.7, bottom: 0 },
     });
 
+    // MA indicator line (only if active)
+    let maSeries: ISeriesApi<'Line'> | null = null;
+    if (maActive) {
+      maSeries = chart.addLineSeries({
+        color: '#2979FF',
+        lineWidth: 2,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        title: `MA (${maPeriod})`,
+      });
+      maSeriesRef.current = maSeries;
+    } else {
+      maSeriesRef.current = null;
+    }
+
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
@@ -116,7 +141,7 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, []);
+  }, [maPeriod, maActive]);
 
   useEffect(() => {
     setHistoricalCandles([]);
@@ -139,14 +164,43 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
     }));
 
     volumeSeriesRef.current.setData(volumeData);
-  }, [ticks, timeframe, historicalCandles]);
 
+    // MA calculation and rendering (only if active)
+    if (maActive && maSeriesRef.current) {
+      const maData = calculateMA(allCandles, maPeriod);
+      maSeriesRef.current.setData(maData);
+    }
+  }, [ticks, timeframe, historicalCandles, maPeriod, maActive]);
+// Exness-style MA calculation
+function calculateMA(candles: Candle[], period: number): { time: Time; value: number }[] {
+  if (!candles || candles.length < period) return [];
+  const result: { time: Time; value: number }[] = [];
+  for (let i = period - 1; i < candles.length; i++) {
+    const slice = candles.slice(i - period + 1, i + 1);
+    const sum = slice.reduce((acc, c) => acc + c.close, 0);
+    result.push({ time: candles[i].time, value: +(sum / period).toFixed(4) });
+  }
+  return result;
+}
+
+  // Chart container rendering
   return (
-    <div
-      ref={containerRef}
-      className="w-full border border-gray-700 rounded bg-gray-900"
-      style={{ height: '500px' }}
-    />
+    <div style={{ position: 'relative', width: '100%', height: '500px' }}>
+      <div ref={containerRef} style={{ width: '100%', height: '500px' }} />
+      {/* MA indicator top-corner display and remove button only if active */}
+      {maActive && (
+        <div style={{ position: 'absolute', top: 12, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: '#2979FF', fontWeight: 700 }}>MA {maPeriod}</span>
+          <button
+            style={{ background: 'transparent', color: '#aaa', border: 'none', fontSize: 18, cursor: 'pointer' }}
+            title="Remove MA"
+            onClick={() => setMaActive(false)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

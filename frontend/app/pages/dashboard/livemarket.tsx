@@ -24,6 +24,7 @@ export default function LiveMarketPage() {
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [timeframe, setTimeframe] = useState('1m');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [addMA, setAddMA] = useState(false); // MA indicator state
   const token = useUserStore.getState().token;
   const { currentPrice, ticks, orderRefreshTrigger, addTick, triggerOrderRefresh } = useTradingStore();
 
@@ -133,6 +134,8 @@ export default function LiveMarketPage() {
           <TimeframeSelector
             activeTimeframe={timeframe}
             onTimeframeChange={setTimeframe}
+            addMA={addMA}
+            setAddMA={setAddMA}
           />
 
           {/* CHART CONTAINER - Full height */}
@@ -141,6 +144,7 @@ export default function LiveMarketPage() {
               symbol={symbol} 
               ticks={ticks} 
               timeframe={timeframe}
+              addMA={addMA}
             />
           </div>
         </div>
