@@ -2,7 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from .api import auth, tournaments, trades, admin
+from .api import auth, tournaments, trades, admin, candles
 from .websocket.manager import manager
 from .websocket import handlers
 from .api.dependencies import get_current_user
@@ -53,6 +53,7 @@ app.include_router(tournaments.router, prefix="/api/tournaments", tags=["tournam
 app.include_router(trades.router, prefix="/api/trades", tags=["trades"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(demo_trading.router, prefix="/api/demo-trading", tags=["demo-trading"])
+app.include_router(candles.router, prefix="/api/candles", tags=["candles"])
 
 # -------------------------
 # Root endpoint

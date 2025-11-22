@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface Tick {
   price: number;
   time: number; // Unix timestamp in seconds
+  quantity: number; // Volume in base currency (BTC, ETH, etc.)
 }
 
 interface TradingState {
@@ -13,7 +14,7 @@ interface TradingState {
   orderRefreshTrigger: number;
 
   setCurrentPrice: (price: number) => void;
-  addTick: (price: number) => void;
+  addTick: (price: number, quantity?: number) => void;
   setOrders: (orders: any[]) => void;
   setWallet: (wallet: any) => void;
   triggerOrderRefresh: () => void;
@@ -28,9 +29,13 @@ export const useTradingStore = create<TradingState>((set) => ({
 
   setCurrentPrice: (price: number) => set({ currentPrice: price }),
 
-  addTick: (price: number) =>
+  addTick: (price: number, quantity: number = 0) =>
     set((state) => ({
-      ticks: [...state.ticks, { price, time: Math.floor(Date.now() / 1000) }],
+      ticks: [...state.ticks, {
+        price,
+        time: Math.floor(Date.now() / 1000),
+        quantity
+      }],
       currentPrice: price,
     })),
 

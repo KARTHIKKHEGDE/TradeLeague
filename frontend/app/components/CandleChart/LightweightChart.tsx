@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createChart, IChartApi, ISeriesApi, Time } from 'lightweight-charts';
 import { Tick } from '../../stores/tradeStore';
+import { api } from '../../services/api';
 
 interface Candle {
   time: Time;
@@ -8,6 +9,7 @@ interface Candle {
   high: number;
   low: number;
   close: number;
+  volume?: number;
 }
 
 interface LightweightChartProps {
@@ -20,26 +22,55 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
 
-  // Initialize chart
+  const [historicalCandles, setHistoricalCandles] = useState<Candle[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
+
+  const fetchHistoricalCandles = async () => {
+    try {
+      console.log(`Fetching 100 ${timeframe} candles for ${symbol}...`);
+      const response = await api.get(`/api/candles/${symbol}?interval=${timeframe}&limit=100`);
+      setHistoricalCandles(response.data);
+      console.log(`Loaded ${response.data.length} historical candles`);
+    } catch (error) {
+      console.error('Error fetching historical candles:', error);
+    }
+  };
+
+  const loadMoreHistoricalCandles = async () => {
+    if (isLoadingMore || !hasMoreData || historicalCandles.length === 0) return;
+
+    setIsLoadingMore(true);
+    try {
+      const oldestCandle = historicalCandles[0];
+      const oldestTime = oldestCandle.time as number;
+
+      const response = await api.get(`/api/candles/${symbol}?interval=${timeframe}&limit=100`);
+      const newCandles = response.data.filter((c: Candle) => (c.time as number) < oldestTime);
+
+      if (newCandles.length === 0) {
+        setHasMoreData(false);
+      } else {
+        setHistoricalCandles(prev => [...newCandles, ...prev]);
+      }
+    } catch (error) {
+      console.error('Error loading more candles:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
-      height: 400,
-      layout: {
-        background: { color: '#1a1a1a' },
-        textColor: '#d1d5db',
-      },
-      grid: {
-        vertLines: { color: '#2B2B43' },
-        horzLines: { color: '#2B2B43' },
-      },
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-      },
+      height: 500,
+      layout: { background: { color: '#1a1a1a' }, textColor: '#d1d5db' },
+      grid: { vertLines: { color: '#2B2B43' }, horzLines: { color: '#2B2B43' } },
+      timeScale: { timeVisible: true, secondsVisible: false },
     });
 
     const candleSeries = chart.addCandlestickSeries({
@@ -50,14 +81,32 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
       wickDownColor: '#ef5350',
     });
 
+    const volumeSeries = chart.addHistogramSeries({
+      color: '#26a69a',
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+    });
+
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: { top: 0.7, bottom: 0 },
+    });
+
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
+    volumeSeriesRef.current = volumeSeries;
 
     const handleResize = () => {
       if (containerRef.current && chart) {
         chart.applyOptions({ width: containerRef.current.clientWidth });
       }
     };
+
+    chart.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
+      if (!logicalRange) return;
+      if (logicalRange.from < 10 && hasMoreData && !isLoadingMore) {
+        loadMoreHistoricalCandles();
+      }
+    });
 
     window.addEventListener('resize', handleResize);
 
@@ -67,29 +116,45 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
     };
   }, []);
 
-  // Update chart data when ticks or timeframe change
   useEffect(() => {
-    if (!candleSeriesRef.current || ticks.length === 0) return;
+    setHistoricalCandles([]);
+    setHasMoreData(true);
+    fetchHistoricalCandles();
+  }, [symbol, timeframe]);
 
-    const candles = aggregateTicksToCandles(ticks, timeframe);
-    candleSeriesRef.current.setData(candles);
+  useEffect(() => {
+    if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
 
-    // Fit content on first load or timeframe change
-    // chartRef.current?.timeScale().fitContent(); 
-  }, [ticks, timeframe]);
+    const liveCandles = aggregateTicksToCandles(ticks, timeframe);
+    const allCandles = mergeCandles(historicalCandles, liveCandles);
+
+    candleSeriesRef.current.setData(allCandles);
+
+    const volumeData = allCandles.map((candle) => ({
+      time: candle.time,
+      value: candle.volume || 0,
+      color: candle.close >= candle.open ? '#26a69a80' : '#ef535080',
+    }));
+
+    volumeSeriesRef.current.setData(volumeData);
+  }, [ticks, timeframe, historicalCandles]);
 
   return (
     <div
       ref={containerRef}
       className="w-full border border-gray-700 rounded bg-gray-900"
-      style={{ height: '400px' }}
+      style={{ height: '500px' }}
     />
   );
 }
 
-// Helper to aggregate ticks into candles based on timeframe
-// This function floors timestamps to round figures (e.g., 08:05:00, 08:10:00)
-// ensuring compatibility with historical candle data
+function mergeCandles(historical: Candle[], live: Candle[]): Candle[] {
+  const candlesMap = new Map<number, Candle>();
+  historical.forEach(c => candlesMap.set(c.time as number, c));
+  live.forEach(c => candlesMap.set(c.time as number, c));
+  return Array.from(candlesMap.values()).sort((a, b) => (a.time as number) - (b.time as number));
+}
+
 function aggregateTicksToCandles(ticks: Tick[], timeframe: string): Candle[] {
   if (ticks.length === 0) return [];
 
@@ -97,34 +162,27 @@ function aggregateTicksToCandles(ticks: Tick[], timeframe: string): Candle[] {
   const candlesMap = new Map<number, Candle>();
 
   ticks.forEach((tick) => {
-    // Floor timestamp to the nearest timeframe interval (round figure)
-    // Example: If tick arrives at 08:05:37 with 1m timeframe (60s)
-    // bucketStart = floor(08:05:37 / 60) * 60 = 08:05:00
-    const timestamp = tick.time;
-    const bucketStart = Math.floor(timestamp / timeframeSeconds) * timeframeSeconds;
-
+    const bucketStart = Math.floor(tick.time / timeframeSeconds) * timeframeSeconds;
     let candle = candlesMap.get(bucketStart);
 
     if (!candle) {
-      // First tick in this time bucket - initialize the candle
       candle = {
         time: bucketStart as Time,
         open: tick.price,
         high: tick.price,
         low: tick.price,
         close: tick.price,
+        volume: tick.quantity || 0,
       };
       candlesMap.set(bucketStart, candle);
     } else {
-      // Subsequent ticks - update high, low, close
-      // Open price remains the first tick's price
       candle.high = Math.max(candle.high, tick.price);
       candle.low = Math.min(candle.low, tick.price);
       candle.close = tick.price;
+      candle.volume = (candle.volume || 0) + (tick.quantity || 0);
     }
   });
 
-  // Return sorted candles by time
   return Array.from(candlesMap.values()).sort((a, b) => (a.time as number) - (b.time as number));
 }
 

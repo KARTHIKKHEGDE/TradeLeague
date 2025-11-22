@@ -21,27 +21,22 @@ export default function LiveMarketPage() {
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [timeframe, setTimeframe] = useState('1m');
   const token = useUserStore.getState().token;
-  const { currentPrice, ticks, orderRefreshTrigger, addTick, triggerOrderRefresh } =
-    useTradingStore();
+  const { currentPrice, ticks, orderRefreshTrigger, addTick, triggerOrderRefresh } = useTradingStore();
 
-  // Wallet state
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [priceLoaded, setPriceLoaded] = useState(false);
 
-  // Fetch wallet on mount and when orderRefreshTrigger changes
   useEffect(() => {
     fetchWallet();
     fetchOrders();
   }, [orderRefreshTrigger]);
 
-  // Fetch initial price on mount
   useEffect(() => {
     fetchInitialPrice();
   }, []);
 
-  // Fetch wallet function
   const fetchWallet = async () => {
     try {
       setLoadingWallet(true);
@@ -54,7 +49,6 @@ export default function LiveMarketPage() {
     }
   };
 
-  // Fetch orders function
   const fetchOrders = async () => {
     try {
       const response = await api.get('/api/demo-trading/orders');
@@ -64,12 +58,11 @@ export default function LiveMarketPage() {
     }
   };
 
-  // Fetch initial price from backend
   const fetchInitialPrice = async () => {
     try {
       const response = await api.get(`/api/demo-trading/price?symbol=${symbol}`);
       if (response.data?.price) {
-        addTick(response.data.price);
+        addTick(response.data.price, 0);
         setPriceLoaded(true);
       }
     } catch (err) {
@@ -78,73 +71,66 @@ export default function LiveMarketPage() {
   };
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      console.log('❌ No token available');
+      return;
+    }
 
     const wsUrl = `${WEBSOCKET_URL}?token=${token}`;
+    console.log('🔌 Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
-      // Subscribe to symbol
+      console.log('✅ WebSocket connected');
       ws.send(JSON.stringify({ type: 'subscribe_symbol', symbol }));
+      console.log('📤 Subscribed to:', symbol);
     };
 
     ws.onmessage = (event) => {
+      console.log('📨 Message:', event.data);
       try {
         const data = JSON.parse(event.data);
 
-        // Handle price ticks
         if (data.type === 'price_update') {
           const payload = data.data;
           const price = payload?.price || payload?.last_price;
+          const quantity = payload?.quantity || 0;
           if (typeof price === 'number') {
-            addTick(price);
+            console.log(`💰 Price: $${price}, Vol: ${quantity} BTC`);
+            addTick(price, quantity);
           }
         } else if (data.type === 'price_data') {
           const price = data.price;
+          const quantity = data.quantity || 0;
           if (typeof price === 'number') {
-            addTick(price);
+            addTick(price, quantity);
           }
         }
 
-        // Handle order closed
-        if (data.type === 'order_closed') {
-          triggerOrderRefresh();
-        }
-
-        // Handle wallet updated
-        if (data.type === 'wallet_updated') {
-          triggerOrderRefresh();
-        }
+        if (data.type === 'order_closed') triggerOrderRefresh();
+        if (data.type === 'wallet_updated') triggerOrderRefresh();
       } catch (err) {
-        console.error('WS parse error:', err);
+        console.error('❌ Parse error:', err);
       }
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+    ws.onerror = (error) => console.error('❌ WebSocket error:', error);
+    ws.onclose = () => console.log('🔌 WebSocket closed');
 
     return () => {
       if (ws) ws.close();
     };
   }, [token, symbol, addTick, triggerOrderRefresh]);
 
-  const handleSymbolChange = (newSymbol: string) => {
-    setSymbol(newSymbol);
-  };
+  const handleSymbolChange = (newSymbol: string) => setSymbol(newSymbol);
+  const handleOrderPlaced = () => triggerOrderRefresh();
 
-  const handleOrderPlaced = () => {
-    triggerOrderRefresh();
-  };
-
-  // Calculate unrealized P/L from open positions
   const calculateUnrealizedPnL = () => {
     if (!currentPrice) return 0;
     return orders
       .filter(o => o.status === 'OPEN')
       .reduce((sum, o) => {
-        const pnl = o.side === 'BUY'
+        const pnl = o.side === 'BUY' 
           ? (currentPrice - o.entry_price) * o.size
           : (o.entry_price - currentPrice) * o.size;
         return sum + pnl;
@@ -156,7 +142,6 @@ export default function LiveMarketPage() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Live Market</h1>
           <button
@@ -167,10 +152,8 @@ export default function LiveMarketPage() {
           </button>
         </div>
 
-        {/* Symbol selector and price ticker with wallet */}
         <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 mb-6">
           <div className="flex justify-between items-center gap-8">
-            {/* Left: Symbol selector */}
             <select
               value={symbol}
               onChange={(e) => handleSymbolChange(e.target.value)}
@@ -179,7 +162,6 @@ export default function LiveMarketPage() {
               <option value="BTCUSDT">BTC / USD (BTCUSDT)</option>
             </select>
 
-            {/* Middle: Wallet Balance */}
             <div className="text-center">
               <p className="text-gray-400 text-sm">Wallet Balance</p>
               <p className="text-2xl font-bold text-blue-400">
@@ -192,7 +174,6 @@ export default function LiveMarketPage() {
               )}
             </div>
 
-            {/* Right: Current Price */}
             <div className="text-right">
               <p className="text-gray-400 text-sm">Current Price</p>
               <p className="text-2xl font-bold text-green-400">
@@ -202,20 +183,18 @@ export default function LiveMarketPage() {
           </div>
         </div>
 
-        {/* Main grid: Chart + Order Panel + Wallet Panel */}
         <div className="grid grid-cols-3 gap-6 mb-6">
-          {/* Chart - spans 2 columns */}
           <div className="col-span-2 flex flex-col gap-4">
-            {/* Timeframe Selector */}
             <div className="flex gap-2 bg-gray-800 p-2 rounded-lg w-fit">
               {['1m', '3m', '5m', '15m', '30m', '1h'].map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1 rounded text-sm font-medium transition ${timeframe === tf
+                  className={`px-3 py-1 rounded text-sm font-medium transition ${
+                    timeframe === tf
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                    }`}
+                  }`}
                 >
                   {tf}
                 </button>
@@ -224,14 +203,12 @@ export default function LiveMarketPage() {
             <LightweightChart symbol={symbol} ticks={ticks} timeframe={timeframe} />
           </div>
 
-          {/* Right sidebar: Order Panel + Wallet Panel */}
           <div className="flex flex-col gap-6">
             <OrderPanel symbol={symbol} currentPrice={currentPrice} onOrderPlaced={handleOrderPlaced} />
             <WalletPanel onWalletUpdate={handleOrderPlaced} refreshTrigger={orderRefreshTrigger} />
           </div>
         </div>
 
-        {/* Orders History */}
         <OrdersHistory refreshTrigger={orderRefreshTrigger} currentPrice={currentPrice} />
       </div>
     </div>
