@@ -49,7 +49,7 @@ export default function TradingNavbar({
             <span
               className="text-2xl font-black tracking-tighter"
               style={{
-                background: 'linear-gradient(135deg, #2563eb 0%, #8b5cf6 50%, #ec4899 100%)',
+                background: 'linear-gradient(135deg, #00D9FF 0%, #0099CC 50%, #006699 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -71,7 +71,7 @@ export default function TradingNavbar({
           {showLiveMarketButton && (
             <button
               onClick={onLiveMarketClick}
-              className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold rounded-lg transition-all"
+              className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 text-white font-bold rounded-lg transition-all"
             >
               Live Market
             </button>
@@ -124,7 +124,7 @@ export default function TradingNavbar({
                 <span className="text-xs font-bold text-white">Account</span>
                 <span className="text-xs text-gray-400">{username}</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
                 {username.charAt(0).toUpperCase()}
               </div>
             </button>
@@ -141,7 +141,7 @@ export default function TradingNavbar({
                     setShowDropdown(false);
                     setShowSettings(true);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition-all"
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-teal-600 hover:text-white transition-all"
                 >
                   Account Settings
                 </button>
@@ -178,7 +178,7 @@ export default function TradingNavbar({
               {!editMode && (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all"
+                  className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-all"
                 >
                   Edit Profile
                 </button>
@@ -195,7 +195,7 @@ export default function TradingNavbar({
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-900 text-white rounded-lg border border-gray-600 focus:border-blue-500 outline-none transition-all text-sm"
+                      className="w-full px-3 py-2 bg-gray-900 text-white rounded-lg border border-teal-600 focus:border-cyan-500 outline-none transition-all text-sm"
                       placeholder="Enter username"
                     />
                   </div>
@@ -209,7 +209,7 @@ export default function TradingNavbar({
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-900 text-white rounded-lg border border-gray-600 focus:border-blue-500 outline-none transition-all text-sm"
+                      className="w-full px-3 py-2 bg-gray-900 text-white rounded-lg border border-teal-600 focus:border-cyan-500 outline-none transition-all text-sm"
                       placeholder="Enter email"
                     />
                   </div>
@@ -221,7 +221,7 @@ export default function TradingNavbar({
                     </label>
                     <input
                       type="password"
-                      className="w-full px-3 py-2 bg-gray-900 text-white rounded-lg border border-gray-600 focus:border-blue-500 outline-none transition-all text-sm"
+                      className="w-full px-3 py-2 bg-gray-900 text-white rounded-lg border border-teal-600 focus:border-cyan-500 outline-none transition-all text-sm"
                       placeholder="Leave empty to keep current"
                     />
                   </div>
@@ -230,7 +230,7 @@ export default function TradingNavbar({
                   <div className="flex gap-2 pt-4">
                     <button
                       onClick={handleSaveSettings}
-                      className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all text-sm"
+                      className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-all text-sm"
                     >
                       Save
                     </button>

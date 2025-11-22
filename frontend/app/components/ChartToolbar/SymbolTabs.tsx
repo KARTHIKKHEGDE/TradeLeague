@@ -32,7 +32,7 @@ export default function SymbolTabs({ activeSymbol, onSymbolChange, symbols }: Sy
           onClick={() => onSymbolChange(symbol.id)}
           className={`px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all ${
             activeSymbol === symbol.id
-              ? 'bg-blue-600 text-white'
+              ? 'bg-cyan-600 text-white'
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
           }`}
         >

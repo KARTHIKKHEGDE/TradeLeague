@@ -72,6 +72,7 @@ export default function LightweightChart({ symbol, ticks, timeframe }: Lightweig
       grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
       timeScale: { timeVisible: true, secondsVisible: false },
       rightPriceScale: { autoScale: true, scaleMargins: { top: 0.15, bottom: 0.15 } },
+      crosshair: { mode: 0 },
     });
 
     const candleSeries = chart.addCandlestickSeries({

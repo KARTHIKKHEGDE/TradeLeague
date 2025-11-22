@@ -68,7 +68,7 @@ export default function CompactOrderPanel({
         {/* Current Price Display */}
         <div className="bg-gray-900 p-2.5 rounded-md border border-gray-700">
           <p className="text-xs text-gray-400 mb-1">Current Price</p>
-          <p className="text-lg font-bold text-blue-400">
+          <p className="text-lg font-bold text-cyan-400">
             {currentPrice ? `$${currentPrice.toFixed(2)}` : '—'}
           </p>
         </div>
@@ -115,7 +115,7 @@ export default function CompactOrderPanel({
             value={size}
             onChange={(e) => setSize(e.target.value)}
             placeholder="0.00"
-            className="w-full px-2.5 py-1.5 bg-gray-900 text-white text-sm rounded border border-gray-600 focus:border-blue-500 outline-none transition"
+            className="w-full px-2.5 py-1.5 bg-gray-900 text-white text-sm rounded border border-teal-600 focus:border-cyan-500 outline-none transition"
           />
         </div>
 
@@ -127,7 +127,7 @@ export default function CompactOrderPanel({
             value={stopLoss}
             onChange={(e) => setStopLoss(e.target.value)}
             placeholder="Optional"
-            className="w-full px-2.5 py-1.5 bg-gray-900 text-white text-sm rounded border border-gray-600 focus:border-blue-500 outline-none transition"
+            className="w-full px-2.5 py-1.5 bg-gray-900 text-white text-sm rounded border border-teal-600 focus:border-cyan-500 outline-none transition"
           />
         </div>
 
@@ -139,7 +139,7 @@ export default function CompactOrderPanel({
             value={takeProfit}
             onChange={(e) => setTakeProfit(e.target.value)}
             placeholder="Optional"
-            className="w-full px-2.5 py-1.5 bg-gray-900 text-white text-sm rounded border border-gray-600 focus:border-blue-500 outline-none transition"
+            className="w-full px-2.5 py-1.5 bg-gray-900 text-white text-sm rounded border border-teal-600 focus:border-cyan-500 outline-none transition"
           />
         </div>
 

@@ -16,7 +16,7 @@ export default function TimeframeSelector({ activeTimeframe, onTimeframeChange }
           onClick={() => onTimeframeChange(tf)}
           className={`px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition-all ${
             activeTimeframe === tf
-              ? 'bg-blue-600 text-white'
+              ? 'bg-cyan-600 text-white'
               : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
           }`}
         >
