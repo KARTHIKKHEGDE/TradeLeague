@@ -115,15 +115,15 @@ export default function LiveMarketPage() {
       <TradingNavbar walletBalance={wallet?.balance} />
 
       {/* TOP BAR - Symbol Tabs */}
-      <SymbolTabs 
-        activeSymbol={symbol} 
+      <SymbolTabs
+        activeSymbol={symbol}
         onSymbolChange={setSymbol}
       />
 
       {/* MAIN LAYOUT */}
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT TOOLBAR - Drawing Tools */}
-        <LeftToolbar 
+        <LeftToolbar
           onReset={handleReset}
           onFullscreen={handleFullscreen}
         />
@@ -140,17 +140,18 @@ export default function LiveMarketPage() {
 
           {/* CHART CONTAINER - Full height */}
           <div className="flex-1 overflow-hidden">
-            <LightweightChart 
-              symbol={symbol} 
-              ticks={ticks} 
+            <LightweightChart
+              symbol={symbol}
+              ticks={ticks}
               timeframe={timeframe}
               addMA={addMA}
+              onRemoveMA={() => setAddMA(false)}
             />
           </div>
         </div>
 
         {/* RIGHT PANEL - Order Panel */}
-        <CompactOrderPanel 
+        <CompactOrderPanel
           symbol={symbol}
           currentPrice={currentPrice}
           onOrderPlaced={handleOrderPlaced}
@@ -160,8 +161,8 @@ export default function LiveMarketPage() {
 
       {/* BOTTOM - Orders History */}
       <div className="border-t border-gray-700 max-h-48 overflow-y-auto">
-        <OrdersHistory 
-          refreshTrigger={orderRefreshTrigger} 
+        <OrdersHistory
+          refreshTrigger={orderRefreshTrigger}
           currentPrice={currentPrice}
         />
       </div>

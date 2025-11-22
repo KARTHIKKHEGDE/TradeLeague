@@ -16,9 +16,11 @@ interface LightweightChartProps {
   symbol: string;
   ticks: Tick[];
   timeframe: string;
+  addMA?: boolean;
+  onRemoveMA?: () => void;
 }
 
-export default function LightweightChart({ symbol, ticks, timeframe, addMA }: LightweightChartProps & { addMA?: boolean }) {
+export default function LightweightChart({ symbol, ticks, timeframe, addMA, onRemoveMA }: LightweightChartProps) {
   // MA indicator active state
   const [maActive, setMaActive] = useState(!!addMA);
   // Sync maActive with addMA prop
@@ -171,17 +173,24 @@ export default function LightweightChart({ symbol, ticks, timeframe, addMA }: Li
       maSeriesRef.current.setData(maData);
     }
   }, [ticks, timeframe, historicalCandles, maPeriod, maActive]);
-// Exness-style MA calculation
-function calculateMA(candles: Candle[], period: number): { time: Time; value: number }[] {
-  if (!candles || candles.length < period) return [];
-  const result: { time: Time; value: number }[] = [];
-  for (let i = period - 1; i < candles.length; i++) {
-    const slice = candles.slice(i - period + 1, i + 1);
-    const sum = slice.reduce((acc, c) => acc + c.close, 0);
-    result.push({ time: candles[i].time, value: +(sum / period).toFixed(4) });
+  // Exness-style MA calculation
+  function calculateMA(candles: Candle[], period: number): { time: Time; value: number }[] {
+    if (!candles || candles.length < period) return [];
+    const result: { time: Time; value: number }[] = [];
+    for (let i = period - 1; i < candles.length; i++) {
+      const slice = candles.slice(i - period + 1, i + 1);
+      const sum = slice.reduce((acc, c) => acc + c.close, 0);
+      result.push({ time: candles[i].time, value: +(sum / period).toFixed(4) });
+    }
+    return result;
   }
-  return result;
-}
+
+  const handleRemoveMA = () => {
+    setMaActive(false);
+    if (onRemoveMA) {
+      onRemoveMA();
+    }
+  };
 
   // Chart container rendering
   return (
@@ -194,7 +203,7 @@ function calculateMA(candles: Candle[], period: number): { time: Time; value: nu
           <button
             style={{ background: 'transparent', color: '#aaa', border: 'none', fontSize: 18, cursor: 'pointer' }}
             title="Remove MA"
-            onClick={() => setMaActive(false)}
+            onClick={handleRemoveMA}
           >
             ×
           </button>
@@ -206,7 +215,7 @@ function calculateMA(candles: Candle[], period: number): { time: Time; value: nu
 
 function mergeCandles(historical: Candle[], live: Candle[]): Candle[] {
   const candlesMap = new Map<number, Candle>();
-  
+
   // Add historical candles with validation
   historical.forEach(c => {
     const timeValue = c.time as number;
@@ -214,7 +223,7 @@ function mergeCandles(historical: Candle[], live: Candle[]): Candle[] {
       candlesMap.set(timeValue, c);
     }
   });
-  
+
   // Add live candles with validation (overwrite historical if same time)
   live.forEach(c => {
     const timeValue = c.time as number;
@@ -222,7 +231,7 @@ function mergeCandles(historical: Candle[], live: Candle[]): Candle[] {
       candlesMap.set(timeValue, c);
     }
   });
-  
+
   return Array.from(candlesMap.values()).sort((a, b) => (a.time as number) - (b.time as number));
 }
 
@@ -240,7 +249,7 @@ function aggregateTicksToCandles(ticks: Tick[], timeframe: string): Candle[] {
     }
 
     const bucketStart = Math.floor(tick.time / timeframeSeconds) * timeframeSeconds;
-    
+
     if (isNaN(bucketStart)) {
       console.warn('Invalid bucket start for tick:', tick);
       return;
